@@ -1,0 +1,22 @@
+{
+    "name": "Ajo Decentralized Savings",
+    "short_name": "Ajo",
+    "description": "Premium rotating savings and credit on Solana.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0a0a0a",
+    "theme_color": "#9333ea",
+    "icons": [
+        {
+            "src": "/ajo_brand_logo.png",
+            "sizes": "640x640",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/ajo_brand_logo_512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

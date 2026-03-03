@@ -1,0 +1,1394 @@
+{
+  "address": "CR6pmRS8pcrc2grm2Hiq8Ny9fhvRV7mx6dYN5Bbs829X",
+  "metadata": {
+    "name": "ajo",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Ajo/Esusu \u2014 Community Savings on Solana"
+  },
+  "instructions": [
+    {
+      "name": "auto_pull",
+      "docs": [
+        "After grace period, pulls contribution from a defaulter's collateral.",
+        "Anyone can call this for any unpaid member once the grace period expires."
+      ],
+      "discriminator": [
+        232,
+        108,
+        193,
+        125,
+        121,
+        203,
+        216,
+        14
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "docs": [
+            "The caller (keeper server). Anyone can call after grace period."
+          ],
+          "signer": true
+        },
+        {
+          "name": "group_state",
+          "docs": [
+            "The group."
+          ]
+        },
+        {
+          "name": "member_state",
+          "docs": [
+            "The defaulting member's state."
+          ],
+          "writable": true
+        },
+        {
+          "name": "round_state",
+          "docs": [
+            "The current round state."
+          ],
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "member_index",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "contribute",
+      "docs": [
+        "Member contributes their share for the current round.",
+        "Transfers exactly contribution_amount to the vault."
+      ],
+      "discriminator": [
+        82,
+        33,
+        68,
+        131,
+        32,
+        0,
+        205,
+        95
+      ],
+      "accounts": [
+        {
+          "name": "member",
+          "docs": [
+            "The member contributing."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "group_state",
+          "docs": [
+            "The group."
+          ]
+        },
+        {
+          "name": "member_state",
+          "docs": [
+            "The member's state."
+          ]
+        },
+        {
+          "name": "round_state",
+          "docs": [
+            "The current round state."
+          ],
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "docs": [
+            "The vault PDA."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "group_state"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault_token_account",
+          "docs": [
+            "Vault token account if using SPL."
+          ],
+          "writable": true
+        },
+        {
+          "name": "member_token_account",
+          "docs": [
+            "Member's token account if using SPL."
+          ],
+          "writable": true
+        },
+        {
+          "name": "mint",
+          "docs": [
+            "Mint for validation."
+          ]
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "delete_group",
+      "docs": [
+        "Deletes a group (Admin only, before any other members join)."
+      ],
+      "discriminator": [
+        42,
+        84,
+        38,
+        134,
+        108,
+        81,
+        86,
+        32
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "docs": [
+            "The admin deleting the group."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "group_state",
+          "docs": [
+            "The group to delete."
+          ],
+          "writable": true
+        },
+        {
+          "name": "member_state",
+          "docs": [
+            "The admin's member state (since admin is auto-added)."
+          ],
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "docs": [
+            "The vault PDA."
+          ],
+          "writable": true
+        },
+        {
+          "name": "mint",
+          "docs": [
+            "Optional mint for stablecoin support."
+          ]
+        },
+        {
+          "name": "vault_token_account",
+          "docs": [
+            "Vault token account if using SPL."
+          ],
+          "writable": true
+        },
+        {
+          "name": "admin_token_account",
+          "docs": [
+            "Admin token account if using SPL."
+          ],
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "payout_round",
+      "docs": [
+        "Executes payout to the round recipient once all contributions are settled.",
+        "Deducts 0.5% platform fee and advances to the next round."
+      ],
+      "discriminator": [
+        235,
+        156,
+        85,
+        43,
+        66,
+        69,
+        234,
+        87
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "docs": [
+            "The caller (keeper server). Anyone can call once all contributions are settled."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "group_state",
+          "docs": [
+            "The group."
+          ],
+          "writable": true
+        },
+        {
+          "name": "round_state",
+          "docs": [
+            "The current round state."
+          ],
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "docs": [
+            "The vault PDA (source of payout funds)."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "group_state"
+              }
+            ]
+          }
+        },
+        {
+          "name": "recipient",
+          "docs": [
+            "The round recipient's wallet (receives payout)."
+          ],
+          "writable": true
+        },
+        {
+          "name": "platform_wallet",
+          "docs": [
+            "The platform wallet."
+          ],
+          "writable": true
+        },
+        {
+          "name": "mint",
+          "docs": [
+            "Optional mint for stablecoin support."
+          ]
+        },
+        {
+          "name": "vault_token_account",
+          "docs": [
+            "Vault token account if using SPL."
+          ],
+          "writable": true
+        },
+        {
+          "name": "recipient_token_account",
+          "docs": [
+            "Recipient's token account if using SPL."
+          ],
+          "writable": true
+        },
+        {
+          "name": "next_round_state",
+          "docs": [
+            "Next round state PDA (created if not the last round)."
+          ],
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_group",
+      "docs": [
+        "Creates a new savings group with the given parameters.",
+        "Auto-calculates contribution and collateral amounts.",
+        "Collects gas reserve and platform fee from the admin."
+      ],
+      "discriminator": [
+        191,
+        73,
+        34,
+        229,
+        233,
+        213,
+        189,
+        173
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "docs": [
+            "The admin creates the group and pays the flat platform fee (0.01 SOL or 1.21 USDC)."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "group_state",
+          "docs": [
+            "The group state PDA."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  114,
+                  111,
+                  117,
+                  112
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "admin"
+              },
+              {
+                "kind": "arg",
+                "path": "name"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "docs": [
+            "The vault PDA that holds all funds (collateral + contributions)."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "group_state"
+              }
+            ]
+          }
+        },
+        {
+          "name": "platform_wallet",
+          "docs": [
+            "The platform fee recipient wallet."
+          ],
+          "writable": true
+        },
+        {
+          "name": "platform_token_account",
+          "docs": [
+            "Platform token account if using SPL."
+          ],
+          "writable": true
+        },
+        {
+          "name": "member_state",
+          "docs": [
+            "Admin's member state PDA."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  101,
+                  109,
+                  98,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "group_state"
+              },
+              {
+                "kind": "account",
+                "path": "admin"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "docs": [
+            "Optional mint for stablecoin support."
+          ]
+        },
+        {
+          "name": "vault_token_account",
+          "docs": [
+            "Vault token account if using SPL."
+          ],
+          "writable": true
+        },
+        {
+          "name": "admin_token_account",
+          "docs": [
+            "Admin token account if using SPL."
+          ],
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "member_count",
+          "type": "u8"
+        },
+        {
+          "name": "payout_amount",
+          "type": "u64"
+        },
+        {
+          "name": "round_interval",
+          "type": "u8"
+        },
+        {
+          "name": "mint",
+          "type": {
+            "option": "pubkey"
+          }
+        }
+      ]
+    },
+    {
+      "name": "join_group",
+      "docs": [
+        "Joins an existing group by depositing collateral.",
+        "The member's rotation position is based on join order."
+      ],
+      "discriminator": [
+        121,
+        56,
+        199,
+        19,
+        250,
+        70,
+        44,
+        184
+      ],
+      "accounts": [
+        {
+          "name": "member",
+          "docs": [
+            "The member joining the group."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "group_state",
+          "docs": [
+            "The group to join."
+          ],
+          "writable": true
+        },
+        {
+          "name": "member_state",
+          "docs": [
+            "The member state PDA (created on join)."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  101,
+                  109,
+                  98,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "group_state"
+              },
+              {
+                "kind": "account",
+                "path": "member"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "docs": [
+            "The vault PDA that holds collateral."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "group_state"
+              }
+            ]
+          }
+        },
+        {
+          "name": "platform_wallet",
+          "docs": [
+            "The platform fee recipient wallet."
+          ],
+          "writable": true
+        },
+        {
+          "name": "mint",
+          "docs": [
+            "Optional mint for SPL support."
+          ]
+        },
+        {
+          "name": "vault_token_account",
+          "docs": [
+            "Vault token account if using SPL."
+          ],
+          "writable": true
+        },
+        {
+          "name": "member_token_account",
+          "docs": [
+            "Member token account if using SPL."
+          ],
+          "writable": true
+        },
+        {
+          "name": "platform_token_account",
+          "docs": [
+            "Platform token account if using SPL."
+          ],
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "leave_group",
+      "docs": [
+        "Leaves a group before it starts. Returns collateral."
+      ],
+      "discriminator": [
+        10,
+        4,
+        125,
+        28,
+        46,
+        23,
+        233,
+        29
+      ],
+      "accounts": [
+        {
+          "name": "member",
+          "docs": [
+            "The member leaving the group."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "group_state",
+          "docs": [
+            "The group to leave."
+          ],
+          "writable": true
+        },
+        {
+          "name": "member_state",
+          "docs": [
+            "The member's state PDA. Will be closed."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  101,
+                  109,
+                  98,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "group_state"
+              },
+              {
+                "kind": "account",
+                "path": "member"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "docs": [
+            "The vault PDA to refund from."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "group_state"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "docs": [
+            "Mint for validation."
+          ]
+        },
+        {
+          "name": "vault_token_account",
+          "docs": [
+            "Vault token account if using SPL."
+          ],
+          "writable": true
+        },
+        {
+          "name": "member_token_account",
+          "docs": [
+            "Member's token account if using SPL."
+          ],
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "refund_collateral",
+      "docs": [
+        "Refunds remaining collateral to a member after the cycle is complete."
+      ],
+      "discriminator": [
+        200,
+        219,
+        212,
+        225,
+        216,
+        188,
+        155,
+        225
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "docs": [
+            "The caller (keeper server or anyone). Anyone can trigger refund after completion."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "group_state",
+          "docs": [
+            "The group (must be completed)."
+          ]
+        },
+        {
+          "name": "final_round_state",
+          "docs": [
+            "The final round state (used to verify completion if status is still Active)."
+          ]
+        },
+        {
+          "name": "member_state",
+          "docs": [
+            "The member state to refund."
+          ],
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "docs": [
+            "The vault PDA (source of refund)."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "group_state"
+              }
+            ]
+          }
+        },
+        {
+          "name": "member_wallet",
+          "docs": [
+            "The member's wallet (receives refund)."
+          ],
+          "writable": true
+        },
+        {
+          "name": "mint",
+          "docs": [
+            "Mint for validation."
+          ]
+        },
+        {
+          "name": "vault_token_account",
+          "docs": [
+            "Vault token account if using SPL."
+          ],
+          "writable": true
+        },
+        {
+          "name": "member_token_account",
+          "docs": [
+            "Member's token account if using SPL."
+          ],
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "start_cycle",
+      "docs": [
+        "Starts the cycle once all member slots are filled.",
+        "Creates Round 1 with the appropriate deadline."
+      ],
+      "discriminator": [
+        203,
+        152,
+        115,
+        167,
+        17,
+        252,
+        73,
+        86
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "docs": [
+            "The caller (keeper server or admin). Anyone can call this once the group is full."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "group_state",
+          "docs": [
+            "The group to start."
+          ],
+          "writable": true
+        },
+        {
+          "name": "round_state",
+          "docs": [
+            "Round 1 state PDA."
+          ],
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "propose_extension",
+      "docs": [
+        "Proposes an extension to the current round deadline."
+      ],
+      "discriminator": [
+        52,
+        87,
+        195,
+        193,
+        21,
+        191,
+        104,
+        79
+      ],
+      "accounts": [
+        {
+          "name": "proposer",
+          "signer": true,
+          "writable": true
+        },
+        {
+          "name": "group_state",
+          "writable": true
+        },
+        {
+          "name": "member_state",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "extension_hours",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "vote_on_extension",
+      "docs": [
+        "Votes on an active extension proposal."
+      ],
+      "discriminator": [
+        232,
+        232,
+        30,
+        115,
+        220,
+        0,
+        179,
+        87
+      ],
+      "accounts": [
+        {
+          "name": "voter",
+          "signer": true,
+          "writable": true
+        },
+        {
+          "name": "group_state",
+          "writable": true
+        },
+        {
+          "name": "round_state",
+          "writable": true
+        },
+        {
+          "name": "member_state",
+          "writable": true
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "GroupState",
+      "discriminator": [
+        55,
+        178,
+        239,
+        222,
+        83,
+        210,
+        195,
+        67
+      ]
+    },
+    {
+      "name": "MemberState",
+      "discriminator": [
+        41,
+        28,
+        21,
+        90,
+        91,
+        49,
+        228,
+        104
+      ]
+    },
+    {
+      "name": "RoundState",
+      "discriminator": [
+        153,
+        242,
+        39,
+        64,
+        102,
+        34,
+        239,
+        11
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidGroupName",
+      "msg": "Group name must be between 1 and 32 characters"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidMemberCount",
+      "msg": "Member count must be between 2 and 20"
+    },
+    {
+      "code": 6002,
+      "name": "MinPayoutNotMet",
+      "msg": "Payout amount does not meet the minimum requirement"
+    },
+    {
+      "code": 6003,
+      "name": "PayoutNotDivisible",
+      "msg": "Payout amount must be perfectly divisible by member count"
+    },
+    {
+      "code": 6004,
+      "name": "InvalidPayoutAmount",
+      "msg": "Invalid payout amount"
+    },
+    {
+      "code": 6005,
+      "name": "InvalidRoundInterval",
+      "msg": "Round interval must be between 0 (Daily) and 3 (Yearly)"
+    },
+    {
+      "code": 6006,
+      "name": "GroupFull",
+      "msg": "Group is already full"
+    },
+    {
+      "code": 6007,
+      "name": "GroupNotFilling",
+      "msg": "Group is not in Filling status"
+    },
+    {
+      "code": 6008,
+      "name": "GroupNotActive",
+      "msg": "Group is not in Active status"
+    },
+    {
+      "code": 6009,
+      "name": "GroupNotFull",
+      "msg": "Group is not full yet"
+    },
+    {
+      "code": 6010,
+      "name": "CycleNotCompleted",
+      "msg": "Cycle has not completed"
+    },
+    {
+      "code": 6011,
+      "name": "AlreadyJoined",
+      "msg": "Member has already joined this group"
+    },
+    {
+      "code": 6012,
+      "name": "InsufficientCollateral",
+      "msg": "Insufficient lamports for collateral deposit"
+    },
+    {
+      "code": 6013,
+      "name": "InvalidContributionAmount",
+      "msg": "Invalid contribution amount"
+    },
+    {
+      "code": 6014,
+      "name": "AlreadyContributed",
+      "msg": "Member has already contributed this round"
+    },
+    {
+      "code": 6015,
+      "name": "GracePeriodNotExpired",
+      "msg": "Grace period has not expired yet"
+    },
+    {
+      "code": 6016,
+      "name": "ContributionsMissing",
+      "msg": "Not all contributions have been settled"
+    },
+    {
+      "code": 6017,
+      "name": "PayoutAlreadySent",
+      "msg": "Payout has already been sent for this round"
+    },
+    {
+      "code": 6018,
+      "name": "NotAMember",
+      "msg": "Member is not part of this group"
+    },
+    {
+      "code": 6019,
+      "name": "ArithmeticOverflow",
+      "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6020,
+      "name": "CollateralAlreadyRefunded",
+      "msg": "Collateral already refunded for this member"
+    },
+    {
+      "code": 6021,
+      "name": "RoundMismatch",
+      "msg": "Round does not match current group round"
+    },
+    {
+      "code": 6022,
+      "name": "MemberNotDefaulted",
+      "msg": "Member has not defaulted this round"
+    },
+    {
+      "code": 6023,
+      "name": "CannotLeaveActiveGroup",
+      "msg": "Cannot leave group after it has started"
+    },
+    {
+      "code": 6024,
+      "name": "NotAdmin",
+      "msg": "Only admin can delete the group"
+    },
+    {
+      "code": 6025,
+      "name": "GroupHasMembers",
+      "msg": "Cannot delete group with active members. Members must leave first."
+    }
+  ],
+  "types": [
+    {
+      "name": "Proposal",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "target_round",
+            "type": "u8"
+          },
+          {
+            "name": "extension_hours",
+            "type": "u16"
+          },
+          {
+            "name": "consensus_reached",
+            "type": "bool"
+          },
+          {
+            "name": "expires_at",
+            "type": "i64"
+          },
+          {
+            "name": "yes_votes",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "GroupStatus",
+      "docs": [
+        "Lifecycle status of a group."
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Filling"
+          },
+          {
+            "name": "Active"
+          },
+          {
+            "name": "Completed"
+          }
+        ]
+      }
+    },
+    {
+      "name": "GroupState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "member_count",
+            "type": "u8"
+          },
+          {
+            "name": "payout_amount",
+            "type": "u64"
+          },
+          {
+            "name": "contribution_amount",
+            "type": "u64"
+          },
+          {
+            "name": "collateral_amount",
+            "type": "u64"
+          },
+          {
+            "name": "round_interval",
+            "type": "u8"
+          },
+          {
+            "name": "current_round",
+            "type": "u8"
+          },
+          {
+            "name": "members",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "GroupStatus"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "vault_bump",
+            "type": "u8"
+          },
+          {
+            "name": "mint",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "active_proposal",
+            "type": {
+              "option": {
+                "defined": {
+                  "name": "Proposal"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "MemberState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "group",
+            "type": "pubkey"
+          },
+          {
+            "name": "collateral_balance",
+            "type": "u64"
+          },
+          {
+            "name": "rotation_position",
+            "type": "u8"
+          },
+          {
+            "name": "joined_at",
+            "type": "i64"
+          },
+          {
+            "name": "refunded",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "last_voted_proposal",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RoundState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "group",
+            "type": "pubkey"
+          },
+          {
+            "name": "round_number",
+            "type": "u8"
+          },
+          {
+            "name": "due_timestamp",
+            "type": "i64"
+          },
+          {
+            "name": "grace_end_timestamp",
+            "type": "i64"
+          },
+          {
+            "name": "contributions_received",
+            "type": {
+              "vec": "bool"
+            }
+          },
+          {
+            "name": "payout_sent",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}

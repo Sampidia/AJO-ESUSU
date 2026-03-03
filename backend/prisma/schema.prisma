@@ -1,0 +1,151 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum GroupStatus {
+  filling
+  active
+  completed
+}
+
+enum RoundInterval {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+model Group {
+  id                 String        @id @default(auto()) @map("_id") @db.ObjectId
+  onChainPublicKey   String        @unique // On-chain Group PublicKey
+  name               String
+  admin              String        // Admin PublicKey
+  memberCount        Int           @default(0)
+  contributionAmount String        // Lamports (String for BigInt precision)
+  roundInterval      RoundInterval
+  currentRound       Int           @default(0)
+  status             GroupStatus   @default(filling)
+  mint               String?       // Optional SPL Mint (USDC/USDT)
+  members            Member[]
+  rounds             Round[]
+  activities         Activity[]
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@index([status])
+  @@index([admin])
+}
+
+model User {
+  id                   String         @id @default(auto()) @map("_id") @db.ObjectId
+  publicKey            String         @unique
+  handle               String?
+  avatarUrl            String?
+  email                String?
+  telegramId           String?
+  pwaSubscription      Json?          // For Web Push
+  notificationsEnabled Boolean        @default(true)
+  memberships          Member[]
+  notifications        Notification[]
+  activities           Activity[]
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+}
+
+model Member {
+  id                   String         @id @default(auto()) @map("_id") @db.ObjectId
+  publicKey            String
+  userId               String         @db.ObjectId
+  user                 User           @relation(fields: [userId], references: [id])
+  groupId              String         @db.ObjectId
+  group                Group          @relation(fields: [groupId], references: [id])
+  rotationPosition     Int
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  notifications        Notification[]
+
+  @@unique([publicKey, groupId])
+  @@index([publicKey])
+  @@index([groupId])
+  @@index([userId])
+}
+
+enum NotificationType {
+  CONTRIBUTION_REMINDER_48H
+  CONTRIBUTION_REMINDER_24H
+  CONTRIBUTION_DUE_NOW
+  LATE_PAYMENT_ALERT
+  PAYOUT_RECEIVED
+  COLLATERAL_REFUNDED
+  GROUP_ALERT
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model Notification {
+  id        String             @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String?            @db.ObjectId
+  user      User?              @relation(fields: [userId], references: [id])
+  memberId  String?            @db.ObjectId
+  member    Member?            @relation(fields: [memberId], references: [id])
+  type      NotificationType
+  status    NotificationStatus @default(PENDING)
+  title     String
+  message   String
+  roundId   String?            @db.ObjectId
+  round     Round?             @relation(fields: [roundId], references: [id])
+  metadata  Json?              // For storing raw event data or context
+  sentAt    DateTime?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([memberId])
+  @@index([type])
+  @@index([status])
+}
+
+model Round {
+  id                      String         @id @default(auto()) @map("_id") @db.ObjectId
+  groupId                 String         @db.ObjectId
+  group                   Group          @relation(fields: [groupId], references: [id])
+  roundNumber             Int
+  dueDate                 DateTime
+  isCompleted             Boolean        @default(false)
+  payoutStarted           Boolean        @default(false)
+  payoutMemberPublicKey  String?        // PublicKey of the member receiving payout
+  notifications           Notification[]
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+
+  @@unique([groupId, roundNumber])
+  @@index([groupId])
+}
+
+model Activity {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  groupId   String   @db.ObjectId
+  group     Group    @relation(fields: [groupId], references: [id])
+  userId    String?  @db.ObjectId
+  user      User?    @relation(fields: [userId], references: [id])
+  type      String   // e.g., "CONTRIBUTION", "PAYOUT_EXECUTED", "CYCLE_STARTED", "JOIN"
+  message   String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([groupId])
+  @@index([userId])
+  @@index([type])
+}

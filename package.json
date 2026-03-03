@@ -1,0 +1,19 @@
+{
+  "name": "ajo-esusu",
+  "version": "0.1.0",
+  "description": "Ajo/Esusu — Community Savings on Solana",
+  "private": true,
+  "scripts": {
+    "test": "anchor test"
+  },
+  "devDependencies": {
+    "@coral-xyz/anchor": "^0.31.1",
+    "@solana/web3.js": "^1.95.0",
+    "chai": "^4.5.0",
+    "mocha": "^10.7.0",
+    "ts-mocha": "^10.0.0",
+    "typescript": "^5.7.0",
+    "@types/chai": "^4.3.0",
+    "@types/mocha": "^10.0.0"
+  }
+}
