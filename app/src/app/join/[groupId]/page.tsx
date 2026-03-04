@@ -197,7 +197,7 @@ export default function JoinGroup() {
 
     const collateral = group.collateralAmount.toNumber() / factor;
     const contribution = group.contributionAmount.toNumber() / factor;
-    const platformFee = isUSDC ? 1.21 : 0.01;
+    const platformFee = isUSDC ? 0.5 : 0.01;
     const totalDeposit = collateral + contribution + platformFee;
 
     return (

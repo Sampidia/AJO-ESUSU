@@ -1026,7 +1026,7 @@ export default function GroupDetails() {
                             </div>
                             <div className="flex justify-between items-center py-2.5 border-b border-white/5">
                                 <span className="text-gray-400 text-sm italic">Platform Fee</span>
-                                <span className="font-semibold text-white text-sm">{group.mint ? "1.21 USDC" : "0.01 SOL"} (Fixed)</span>
+                                <span className="font-semibold text-white text-sm">{group.mint ? "0.5 USDC" : "0.01 SOL"} (Fixed)</span>
                             </div>
                             <div className="flex justify-between items-center py-2.5">
                                 <span className="text-gray-400 text-sm italic">Fee Model</span>

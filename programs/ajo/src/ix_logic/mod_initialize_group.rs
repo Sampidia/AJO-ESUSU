@@ -189,7 +189,7 @@ pub fn initialize_group_handler(
                     authority: ctx.accounts.admin.to_account_info(),
                 },
             ),
-            PLATFORM_FEE_USDC, // 1.21 USDC
+            PLATFORM_FEE_USDC, // 0.5 USDC
         )?;
     } else {
         system_program::transfer(
