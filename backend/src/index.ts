@@ -6,6 +6,7 @@ import { SchedulerService } from "./services/scheduler";
 import { TelegramHelper } from "./services/telegram";
 import { bot } from "./services/bot";
 import { prisma } from "./lib/prisma";
+import { SyncService } from "./services/syncer";
 
 dotenv.config();
 
@@ -71,6 +72,11 @@ app.post("/api/register", async (req: Request, res: Response) => {
             // Fallback for cases where groupId might already be internal ID (rare)
             if (!group && groupId.length === 24) {
                 group = await prisma.group.findUnique({ where: { id: groupId } });
+            }
+
+            if (!group) {
+                // Proactive Sync: If not in DB, try fetching directly from Solana
+                group = await SyncService.syncGroup(groupId);
             }
 
             if (!group) {
@@ -206,6 +212,39 @@ app.patch("/api/user/:publicKey", async (req: Request, res: Response) => {
         });
         res.json({ success: true, user });
     } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Fetch Group Details with Proactive Sync
+app.get("/api/group/:groupId", async (req: Request, res: Response) => {
+    const { groupId } = req.params as any;
+    try {
+        let group = await prisma.group.findUnique({
+            where: { onChainPublicKey: groupId as string },
+            include: { members: true, rounds: true }
+        });
+
+        // If missing, try syncing from chain
+        if (!group) {
+            console.log(`🔍 Group ${groupId} not in DB, attempting sync...`);
+            group = await SyncService.syncGroup(groupId);
+            if (group) {
+                // Refetch with relations
+                group = await prisma.group.findUnique({
+                    where: { id: group.id },
+                    include: { members: true, rounds: true }
+                });
+            }
+        }
+
+        if (!group) {
+            return res.status(404).json({ error: "Group not found on Solana or database." });
+        }
+
+        res.json({ success: true, group });
+    } catch (error: any) {
+        console.error("Fetch group error:", error);
         res.status(500).json({ error: error.message });
     }
 });
