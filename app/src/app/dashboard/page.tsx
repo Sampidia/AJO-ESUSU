@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { ConfirmationModal } from "../../components/ui/ConfirmationModal";
 import { parseError } from "../../lib/errors";
 import { Tooltip } from "../../components/ui/Tooltip";
-import { SystemProgram } from "@solana/web3.js";
+import { SystemProgram, PublicKey } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 export default function Dashboard() {
