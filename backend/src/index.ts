@@ -7,6 +7,7 @@ import { TelegramHelper } from "./services/telegram";
 import { bot } from "./services/bot";
 import { prisma } from "./lib/prisma";
 import { SyncService } from "./services/syncer";
+import { ActivityService } from "./services/activity";
 
 dotenv.config();
 
@@ -101,6 +102,10 @@ app.post("/api/register", async (req: Request, res: Response) => {
         });
 
         // 2. Upsert the Member record tied to this user and group
+        const isNewMember = !(await prisma.member.findUnique({
+            where: { publicKey_groupId: { publicKey, groupId: group.id } }
+        }));
+
         const member = await prisma.member.upsert({
             where: {
                 publicKey_groupId: { publicKey, groupId: group.id }
@@ -117,9 +122,30 @@ app.post("/api/register", async (req: Request, res: Response) => {
             include: { group: true, user: true }
         });
 
+        if (isNewMember) {
+            await ActivityService.log({
+                groupId: group.id,
+                userId: user.id,
+                type: "JOIN",
+                message: `${user.handle || publicKey.slice(0, 4)} joined the circle.`
+            });
+        }
+
         res.json({ success: true, member });
     } catch (error: any) {
         console.error("Registration error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Manual Sync Trigger
+app.post("/api/sync/:groupId", async (req: Request, res: Response) => {
+    const { groupId } = req.params as any;
+    try {
+        const group = await SyncService.syncGroup(groupId);
+        if (!group) return res.status(404).json({ error: "Group not found on Solana." });
+        res.json({ success: true, group });
+    } catch (error: any) {
         res.status(500).json({ error: error.message });
     }
 });

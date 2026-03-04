@@ -46,6 +46,7 @@ export function ActivityFeed({ groupId }: { groupId: string }) {
             case "CONTRIBUTION": return <CircleDollarSign className="w-4 h-4 text-green-400" />;
             case "PAYOUT_EXECUTED": return <Rocket className="w-4 h-4 text-purple-400" />;
             case "CYCLE_STARTED": return <Play className="w-4 h-4 text-yellow-400" />;
+            case "GROUP_ALERT": return <AlertCircle className="w-4 h-4 text-orange-400" />;
             default: return <Zap className="w-4 h-4 text-gray-400" />;
         }
     };
