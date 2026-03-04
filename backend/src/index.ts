@@ -203,6 +203,39 @@ app.get("/api/user/:publicKey", async (req: Request, res: Response) => {
     }
 });
 
+// Fetch All Groups for a User (Sorted by Newest First)
+app.get("/api/groups/user/:publicKey", async (req: Request, res: Response) => {
+    const { publicKey } = req.params as any;
+    try {
+        const memberships = await prisma.member.findMany({
+            where: { publicKey: publicKey as string },
+            include: {
+                group: {
+                    select: {
+                        onChainPublicKey: true,
+                        createdAt: true
+                    }
+                }
+            },
+            orderBy: {
+                group: {
+                    createdAt: "desc"
+                }
+            }
+        });
+
+        const groups = memberships.map(m => ({
+            publicKey: m.group.onChainPublicKey,
+            createdAt: m.group.createdAt
+        }));
+
+        res.json({ success: true, groups });
+    } catch (error: any) {
+        console.error("Fetch user groups error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.patch("/api/user/:publicKey", async (req: Request, res: Response) => {
     const { publicKey } = req.params as any;
     const { email, telegramId, handle, avatarUrl } = req.body;

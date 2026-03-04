@@ -34,35 +34,39 @@ export default function Dashboard() {
         try {
             const program = getProgram(connection, wallet?.adapter);
 
-            // Manual fetch to handle legacy accounts gracefully
-            const accounts = await connection.getProgramAccounts(program.programId, {
-                filters: [
-                    {
-                        memcmp: program.coder.accounts.memcmp("groupState")
-                    }
-                ]
-            });
+            // 1. Fetch user's groups from backend (sorted by newest)
+            const resp = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/groups/user/${publicKey.toBase58()}`);
+            const data = await resp.json();
 
-            const allGroups = accounts.map(acc => {
-                try {
-                    return {
-                        publicKey: acc.pubkey,
-                        account: program.coder.accounts.decode("groupState", acc.account.data)
-                    };
-                } catch (e) {
-                    console.warn(`Skipping incompatible group account: ${acc.pubkey.toString()}`);
-                    return null;
-                }
-            }).filter((g): g is any => g !== null);
+            if (!data.success || !data.groups) {
+                setGroups([]);
+                return;
+            }
 
-            const userGroups = allGroups.filter((g: any) => {
-                const isAdmin = g.account.admin.equals(publicKey);
-                const isMember = g.account.members.some((m: any) => m.equals(publicKey));
-                return isAdmin || isMember;
-            });
+            const pks = data.groups.map((g: any) => new PublicKey(g.publicKey));
+            if (pks.length === 0) {
+                setGroups([]);
+                return;
+            }
+
+            // 2. Fetch all states in one batch for better performance
+            const groupStates = await program.account.groupState.fetchMultiple(pks);
+
+            // 3. Map states back to the sorted list from backend
+            const userGroups = data.groups.map((g: any, index: number) => {
+                const state = groupStates[index];
+                if (!state) return null;
+                return {
+                    publicKey: pks[index],
+                    account: state,
+                    createdAt: new Date(g.createdAt)
+                };
+            }).filter((g: any) => g !== null);
+
             setGroups(userGroups);
         } catch (err) {
             console.error("Error fetching groups:", err);
+            setError("Failed to load circles. Please refresh.");
         } finally {
             setLoading(false);
         }

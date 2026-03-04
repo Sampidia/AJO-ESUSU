@@ -67,9 +67,14 @@ export default function GroupDetails() {
             try {
                 groupData = await program.account.groupState.fetch(groupPubKey);
                 setGroup(groupData);
-            } catch (e) {
+            } catch (e: any) {
                 console.error("Error decoding group state:", e);
-                setError("This group is from an older version of the program and is no longer compatible.");
+                const isNetworkError = e.message?.includes("fetch") || e.message?.includes("timeout") || e.message?.includes("Refused");
+                if (isNetworkError) {
+                    setError("Network congestion detected. Please refresh the page.");
+                } else {
+                    setError("This group is from an older version of the program and is no longer compatible.");
+                }
                 setLoading(false);
                 return;
             }
