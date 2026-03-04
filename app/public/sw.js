@@ -6,6 +6,12 @@ self.addEventListener("activate", (event) => {
     event.waitUntil(clients.claim());
 });
 
+// Mandatory fetch handler for PWA installability
+self.addEventListener("fetch", (event) => {
+    // We don't need to cache everything for this MVP, but the listener must exist
+    // event.respondWith(fetch(event.request)); 
+});
+
 self.addEventListener("push", (event) => {
     if (!event.data) return;
 

@@ -15,6 +15,11 @@
         },
         {
             "src": "/ajo_brand_logo_512.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/ajo_brand_logo_512.png",
             "sizes": "512x512",
             "type": "image/png"
         }

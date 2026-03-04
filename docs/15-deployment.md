@@ -53,6 +53,7 @@
 - [ ] Referral system: share invite link, earn fee discount
 - [ ] Landing page SEO optimisation
 - [ ] Consider WhatsApp Business API integration (paid tier)
+- [ ] WalletConnect Support (multi-wallet & mobile integration)
 - [ ] Community support channel (Telegram group for users)
 
 ---

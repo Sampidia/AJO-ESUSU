@@ -38,6 +38,8 @@ export default function SettingsPage() {
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
     const [showAllNotifications, setShowAllNotifications] = useState(false);
+    const [isIOS, setIsIOS] = useState(false);
+    const [isStandalone, setIsStandalone] = useState(false);
 
     useEffect(() => {
         const handler = (e: any) => {
@@ -45,6 +47,11 @@ export default function SettingsPage() {
             setDeferredPrompt(e);
         };
         window.addEventListener('beforeinstallprompt', handler);
+
+        // Detect device/env
+        setIsIOS(/iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream);
+        setIsStandalone(window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true);
+
         return () => window.removeEventListener('beforeinstallprompt', handler);
     }, []);
 
@@ -329,14 +336,35 @@ export default function SettingsPage() {
                         </div>
                         <CardDescription className="mb-6">Access Ajo quickly from your home screen.</CardDescription>
                         <div className="space-y-4">
-                            <Button
-                                variant="outline"
-                                className="w-full justify-between"
-                                onClick={handleInstall}
-                                disabled={!deferredPrompt}
-                            >
-                                {deferredPrompt ? "Install as Web App" : "Already Installed / Not Supported"} <Smartphone className="w-4 h-4" />
-                            </Button>
+                            {isStandalone ? (
+                                <div className="p-4 rounded-2xl bg-green-500/5 border border-green-500/10 flex items-center justify-center gap-2 text-green-400 text-sm font-bold">
+                                    <Check className="w-4 h-4" /> APP INSTALLED
+                                </div>
+                            ) : deferredPrompt ? (
+                                <Button
+                                    variant="outline"
+                                    className="w-full justify-between bg-purple-500/5 border-purple-500/20 text-purple-400 hover:bg-purple-500/10"
+                                    onClick={handleInstall}
+                                >
+                                    Install as Web App <Smartphone className="w-4 h-4" />
+                                </Button>
+                            ) : isIOS ? (
+                                <div className="p-4 rounded-xl bg-indigo-500/5 border border-indigo-500/10 space-y-2">
+                                    <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-wider">How to Install on iOS:</p>
+                                    <ol className="text-[10px] text-gray-400 space-y-1 list-decimal list-inside">
+                                        <li>Tap the <span className="text-white">Share</span> button in Safari</li>
+                                        <li>Scroll down and tap <span className="text-white">Add to Home Screen</span></li>
+                                    </ol>
+                                </div>
+                            ) : (
+                                <Button
+                                    variant="outline"
+                                    className="w-full justify-between opacity-50 cursor-not-allowed"
+                                    disabled
+                                >
+                                    Install via Browser Menu <Download className="w-4 h-4" />
+                                </Button>
+                            )}
                             <p className="text-[10px] text-gray-500 text-center leading-relaxed">
                                 PWA support allows for offline viewing and mobile-centric features.
                             </p>

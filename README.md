@@ -108,6 +108,15 @@ Every member nets **0 SOL** at cycle end. The value is lump-sum access at your r
 
 ---
 
+## Upcoming Roadmap (Phase 3+)
+
+- [ ] **WalletConnect Support**: Enable connection via Ledger, Exodus, and various mobile wallets.
+- [ ] **USDC Support**: Ability to create groups using USDC stablecoin (SPL).
+- [ ] **Referral System**: Share invite links to earn fee discounts.
+- [ ] **WhatsApp Bot**: Alternative notification channel for broader accessibility.
+
+---
+
 ## Getting Started (Coming Soon)
 
 ```bash
