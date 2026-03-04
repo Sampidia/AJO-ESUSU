@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardTitle } from "@/components/ui/Card";
-import { Clock, User, Zap, CircleDollarSign, Play, Rocket } from "lucide-react";
+import { Clock, User, Zap, CircleDollarSign, Play, Rocket, AlertCircle } from "lucide-react";
 
 interface Activity {
     id: string;
