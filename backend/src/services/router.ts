@@ -104,10 +104,10 @@ export class NotificationRouter {
         if (!member.user.email || !process.env.RESEND_API_KEY) return null;
 
         try {
-            const fromEmail = process.env.FROM_EMAIL || "notifications@ajo.finance";
+            const fromEmail = process.env.FROM_EMAIL || "admin@ajo-esusu.sampidia.com";
             console.log(`📧 Sending Email to: ${member.user.email} (Type: ${title})`);
 
-            await resend.emails.send({
+            const { data, error } = await resend.emails.send({
                 from: `Ajo Notifications <${fromEmail}>`,
                 to: member.user.email,
                 subject: title,
@@ -135,6 +135,13 @@ export class NotificationRouter {
                         </div>
                     </div>`
             });
+
+            if (error) {
+                console.error("📧 Resend API returned error:", error);
+                return false;
+            }
+
+            console.log(`📧 Email accepted by Resend: ID=${data?.id}`);
             return true;
         } catch (error: any) {
             const errStr = error.message || "";
