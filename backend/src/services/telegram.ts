@@ -63,21 +63,33 @@ export class TelegramHelper {
             ctx.reply(`📊 *Your Active Circles:*\n${list}`, { parse_mode: "Markdown" });
         });
 
-        const launchBot = (retryCount = 0) => {
-            bot!.launch()
-                .then(() => console.log("✅ Telegram Bot is polling for updates..."))
-                .catch((err) => {
-                    const isTimeout = err.code === "ETIMEDOUT" || err.message?.includes("ETIMEDOUT");
-                    if (isTimeout && retryCount < 5) {
-                        const delay = Math.min(1000 * Math.pow(2, retryCount), 30000);
-                        console.warn(`⚠️ Telegram Bot launch timed out. Retrying in ${delay / 1000}s... (Attempt ${retryCount + 1}/5)`);
-                        setTimeout(() => launchBot(retryCount + 1), delay);
-                    } else {
-                        console.error("❌ Failed to launch Telegram Bot:", err);
-                    }
-                });
-        };
+        // Use Webhooks on Vercel, Polling locally
+        const isVercel = process.env.VERCEL === "1" || !!process.env.VERCEL_URL;
+        const backendUrl = process.env.BACKEND_URL;
 
-        launchBot();
+        if (isVercel && backendUrl) {
+            console.log("🔗 Setting up Telegram Webhook...");
+            bot.telegram.setWebhook(`${backendUrl}/api/telegram`)
+                .then(() => console.log(`✅ Telegram Webhook set to ${backendUrl}/api/telegram`))
+                .catch((err) => console.error("❌ Failed to set Telegram Webhook:", err));
+        } else if (!isVercel) {
+            const launchBot = (retryCount = 0) => {
+                bot!.launch()
+                    .then(() => console.log("✅ Telegram Bot is polling for updates..."))
+                    .catch((err) => {
+                        const isTimeout = err.code === "ETIMEDOUT" || err.message?.includes("ETIMEDOUT");
+                        if (isTimeout && retryCount < 5) {
+                            const delay = Math.min(1000 * Math.pow(2, retryCount), 30000);
+                            console.warn(`⚠️ Telegram Bot launch timed out. Retrying in ${delay / 1000}s... (Attempt ${retryCount + 1}/5)`);
+                            setTimeout(() => launchBot(retryCount + 1), delay);
+                        } else {
+                            console.error("❌ Failed to launch Telegram Bot:", err);
+                        }
+                    });
+            };
+            launchBot();
+        } else {
+            console.warn("⚠️ BACKEND_URL not set, Telegram Bot will not work on Vercel.");
+        }
     }
 }

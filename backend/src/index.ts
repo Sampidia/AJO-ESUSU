@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { SolanaListener } from "./services/listener";
 import { SchedulerService } from "./services/scheduler";
-import { TelegramHelper } from "./services/telegram";
+import { bot } from "./services/bot";
 import { prisma } from "./lib/prisma";
 
 dotenv.config();
@@ -386,6 +386,19 @@ app.post("/api/push/subscribe", async (req: Request, res: Response) => {
     }
 });
 
+// Telegram Webhook Endpoint
+app.post("/api/telegram", async (req: Request, res: Response) => {
+    if (!bot) {
+        return res.status(500).json({ error: "Bot not initialized" });
+    }
+    try {
+        await bot.handleUpdate(req.body, res);
+    } catch (error: any) {
+        console.error("Telegram webhook error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Cron Job Endpoints (Secured via CRON_SECRET)
 app.get("/api/cron/:task", async (req: Request, res: Response) => {
     const { task } = req.params as any;
@@ -427,7 +440,6 @@ if (process.env.NODE_ENV !== "production" || !process.env.VERCEL) {
         scheduler.start();
         TelegramHelper.init();
     });
-} else {
     // On Vercel, we still need to init some things if they are stateless
     // but avoid long-running loops or listeners that block the function.
     TelegramHelper.init();
