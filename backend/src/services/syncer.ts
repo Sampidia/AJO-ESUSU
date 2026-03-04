@@ -27,7 +27,10 @@ export class SyncService {
 
             const intervalMap: Record<number, any> = { 0: "DAILY", 1: "WEEKLY", 2: "MONTHLY", 3: "YEARLY" };
             const roundInterval = intervalMap[onChainGroup.roundInterval] || "WEEKLY";
-            const onChainStatus = Object.keys(onChainGroup.status)[0] as any;
+            const onChainStatusName = Object.keys(onChainGroup.status)[0];
+            const onChainStatus = onChainStatusName.toLowerCase() as any;
+
+            console.log(`🔍 Group ${groupPk} status: ${onChainStatus}`);
 
             const existingGroup = await prisma.group.findUnique({
                 where: { onChainPublicKey: groupPk },
@@ -86,17 +89,21 @@ export class SyncService {
             // 2. Notifications & Activities
             // Handle "Group Full"
             if (onChainMembers.length === onChainGroup.memberCount && (!existingGroup || existingGroup.members.length < onChainGroup.memberCount)) {
+                console.log(`🎉 Group ${group.name} is now FULL!`);
                 const adminId = (await prisma.member.findUnique({
                     where: { publicKey_groupId: { publicKey: onChainGroup.admin.toBase58(), groupId: group.id } }
                 }))?.id;
 
                 if (adminId) {
+                    console.log(`📡 Dispatching FULL notification to admin: ${adminId}`);
                     await NotificationRouter.dispatch(
                         adminId,
                         NotificationType.GROUP_ALERT,
                         "Your group is full! 🎉",
                         `'${group.name}' has reached its member limit and is ready to start.`
                     );
+                } else {
+                    console.warn(`⚠️ Admin member not found for group ${group.id}, skipping notification.`);
                 }
 
                 await ActivityService.log({
@@ -108,6 +115,21 @@ export class SyncService {
 
             // Handle "Cycle Started"
             if (onChainStatus === "active" && (!existingGroup || existingGroup.status === "filling")) {
+                console.log(`🚀 Group ${group.name} cycle has STARTED!`);
+
+                const adminId = (await prisma.member.findUnique({
+                    where: { publicKey_groupId: { publicKey: onChainGroup.admin.toBase58(), groupId: group.id } }
+                }))?.id;
+
+                if (adminId) {
+                    await NotificationRouter.dispatch(
+                        adminId,
+                        NotificationType.GROUP_ALERT,
+                        "Cycle Started! 🚀",
+                        `'${group.name}' has officially started! Round 1 is now active.`
+                    );
+                }
+
                 await ActivityService.log({
                     groupId: group.id,
                     type: "CYCLE_STARTED",
@@ -145,6 +167,20 @@ export class SyncService {
         } catch (error: any) {
             console.error(`❌ Sync failed for group ${groupPk}:`, error.message || error);
             return null;
+        }
+    static async syncAllCurrentGroups(): Promise<void> {
+        try {
+            console.log("🔍 Proactive Global Sync: Fetching all active/filling groups...");
+            const groups = await prisma.group.findMany({
+                where: { status: { in: ["filling", "active"] } }
+            });
+
+            console.log(`🔍 Found ${groups.length} groups to sync.`);
+            for (const group of groups) {
+                await this.syncGroup(group.onChainPublicKey);
+            }
+        } catch (error: any) {
+            console.error("❌ Global Sync Failed:", error.message || error);
         }
     }
 }

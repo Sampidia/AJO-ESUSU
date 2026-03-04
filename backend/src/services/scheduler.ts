@@ -7,6 +7,8 @@ import { NotificationRouter } from "./router";
 import { prisma } from "../lib/prisma";
 import ajoIdl from "../idl/ajo.json";
 import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { SyncService } from "./syncer";
+import { ActivityService } from "./activity";
 
 
 const PROGRAM_ID = new PublicKey("CR6pmRS8pcrc2grm2Hiq8Ny9fhvRV7mx6dYN5Bbs829X");
@@ -77,6 +79,14 @@ export class SchedulerService {
     public async runAutomation() {
         try {
             await this.getProgram(); // Ensure initialized
+
+            // 1. Proactive Global Sync before running automation
+            // This ensures we have the latest group states, member lists, and rounds in our DB
+            try {
+                await SyncService.syncAllCurrentGroups();
+            } catch (e) {
+                console.error("❌ Pre-automation sync failed:", e);
+            }
 
             // Isolate each step so one network failure doesn't abort the others
             try {
@@ -378,7 +388,16 @@ export class SchedulerService {
                                         }
                                     }
                                 }
-                                if (success) await new Promise(r => setTimeout(r, 500));
+                                if (success) {
+                                    await ActivityService.log({
+                                        groupId: group.id,
+                                        userId: member.userId,
+                                        type: "AUTO_PULL",
+                                        message: `Automated contribution collected for ${group.name} Round ${round.roundNumber}.`,
+                                        metadata: { roundNum: round.roundNumber, amount: group.contributionAmount }
+                                    });
+                                    await new Promise(r => setTimeout(r, 500));
+                                }
                             }
                         }
                     }
@@ -431,6 +450,8 @@ export class SchedulerService {
                     }
 
                     const allContributed = onChainRound.contributionsReceived.every((c: boolean) => c === true);
+                    console.log(`🔍 Checking conditions for ${group.name}: Round=${group.currentRound}, allContributed=${allContributed}, payoutSent=${onChainRound.payoutSent}, localPayoutStarted=${localRound?.payoutStarted}`);
+
                     if (allContributed && !onChainRound.payoutSent && localRound && !localRound.payoutStarted && !localRound.isCompleted) {
                         console.log(`🤖 Executing Payout for ${group.name} Round ${group.currentRound}`);
                         await prisma.round.update({ where: { id: localRound.id }, data: { payoutStarted: true } });
@@ -491,6 +512,23 @@ export class SchedulerService {
 
                             const tx = await program.methods.payoutRound().accounts(accounts).rpc();
                             console.log(`✅ Payout Successful: ${tx}`);
+
+                            // Log activity
+                            await ActivityService.log({
+                                groupId: group.id,
+                                userId: member.userId, // The recipient
+                                type: "PAYOUT_EXECUTED",
+                                message: `Payout of ${((Number(group.contributionAmount) * group.memberCount) / 1e9).toFixed(4)} SOL sent to ${member.publicKey.slice(0, 4)}...`,
+                                metadata: { tx, roundNum: group.currentRound, amount: (Number(group.contributionAmount) * group.memberCount).toString() }
+                            });
+
+                            // Dispatch notification
+                            await NotificationRouter.dispatch(
+                                member.id,
+                                NotificationType.PAYOUT_RECEIVED,
+                                "Payout Received! 💰",
+                                `You have received the payout for '${group.name}' Round ${group.currentRound}. Check your wallet!`
+                            );
                         } catch (err: any) {
                             const errStr = err.message || "";
                             if (errStr.includes("Payout already sent") || errStr.includes("AlreadyProcessed")) {
