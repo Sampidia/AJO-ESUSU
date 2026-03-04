@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { SolanaListener } from "./services/listener";
 import { SchedulerService } from "./services/scheduler";
+import { TelegramHelper } from "./services/telegram";
 import { bot } from "./services/bot";
 import { prisma } from "./lib/prisma";
 
@@ -440,6 +441,7 @@ if (process.env.NODE_ENV !== "production" || !process.env.VERCEL) {
         scheduler.start();
         TelegramHelper.init();
     });
+} else {
     // On Vercel, we still need to init some things if they are stateless
     // but avoid long-running loops or listeners that block the function.
     TelegramHelper.init();
