@@ -88,66 +88,69 @@ export class SyncService {
 
             // 2. Notifications & Activities
             const activeOnChainMembers = onChainMembers.filter(m => m.toBase58() !== "11111111111111111111111111111111");
-            console.log(`🔍 Sync Check [${group.name}]: onChainActive=${activeOnChainMembers.length}, target=${onChainGroup.memberCount}, localPrev=${existingGroup?.members.length || 0}`);
+            console.log(`🔍 Sync Check [${group.name}]: onChainActive=${activeOnChainMembers.length}, target=${onChainGroup.memberCount}, localStatus=${existingGroup?.status || "new"}`);
 
             // Handle "Group Full"
-            if (activeOnChainMembers.length === onChainGroup.memberCount && (!existingGroup || existingGroup.members.length < onChainGroup.memberCount)) {
-                console.log(`🎉 Group ${group.name} is now FULL! (Active members: ${activeOnChainMembers.length})`);
+            if (activeOnChainMembers.length === onChainGroup.memberCount && onChainStatus === "filling") {
+                const alreadyNotified = await prisma.activity.findFirst({
+                    where: { groupId: group.id, type: "GROUP_ALERT", message: { contains: "is full" } }
+                });
 
-                // Find admin member ID more robustly
-                const adminPk = onChainGroup.admin.toBase58();
-                const adminMember = await prisma.member.findFirst({
-                    where: {
-                        groupId: group.id,
-                        publicKey: adminPk
+                if (!alreadyNotified) {
+                    console.log(`🎉 Group ${group.name} is FULL! (Active members: ${activeOnChainMembers.length})`);
+
+                    const adminPk = onChainGroup.admin.toBase58();
+                    const adminMember = await prisma.member.findFirst({
+                        where: { groupId: group.id, publicKey: adminPk }
+                    });
+
+                    if (adminMember) {
+                        console.log(`📡 Dispatching FULL notification to admin: ${adminPk}`);
+                        await NotificationRouter.dispatch(
+                            adminMember.id,
+                            NotificationType.GROUP_ALERT,
+                            "Your group is full! 🎉",
+                            `'${group.name}' has reached its member limit and is ready to start.`
+                        );
                     }
-                });
 
-                if (adminMember) {
-                    console.log(`📡 Dispatching FULL notification to admin: ${adminPk} (MemberID: ${adminMember.id})`);
-                    await NotificationRouter.dispatch(
-                        adminMember.id,
-                        NotificationType.GROUP_ALERT,
-                        "Your group is full! 🎉",
-                        `'${group.name}' has reached its member limit and is ready to start.`
-                    );
-                } else {
-                    console.warn(`⚠️ Admin member ${adminPk} not found in DB for group ${group.id}, skipping notification.`);
+                    await ActivityService.log({
+                        groupId: group.id,
+                        type: "GROUP_ALERT",
+                        message: "Group is full and ready for cycle start."
+                    });
                 }
-
-                await ActivityService.log({
-                    groupId: group.id,
-                    type: "GROUP_ALERT",
-                    message: "Group is full and ready for cycle start."
-                });
             }
 
             // Handle "Cycle Started"
-            if (onChainStatus === "active" && (!existingGroup || existingGroup.status === "filling")) {
-                console.log(`🚀 Group ${group.name} cycle has STARTED!`);
+            if (onChainStatus === "active") {
+                const alreadyNotified = await prisma.activity.findFirst({
+                    where: { groupId: group.id, type: "CYCLE_STARTED" }
+                });
 
-                const adminPk = onChainGroup.admin.toBase58();
-                const adminMember = await prisma.member.findFirst({
-                    where: {
-                        groupId: group.id,
-                        publicKey: adminPk
+                if (!alreadyNotified) {
+                    console.log(`🚀 Group ${group.name} cycle has STARTED!`);
+
+                    const adminPk = onChainGroup.admin.toBase58();
+                    const adminMember = await prisma.member.findFirst({
+                        where: { groupId: group.id, publicKey: adminPk }
+                    });
+
+                    if (adminMember) {
+                        await NotificationRouter.dispatch(
+                            adminMember.id,
+                            NotificationType.GROUP_ALERT,
+                            "Cycle Started! 🚀",
+                            `'${group.name}' has officially started! Round 1 is now active.`
+                        );
                     }
-                });
 
-                if (adminMember) {
-                    await NotificationRouter.dispatch(
-                        adminMember.id,
-                        NotificationType.GROUP_ALERT,
-                        "Cycle Started! 🚀",
-                        `'${group.name}' has officially started! Round 1 is now active.`
-                    );
+                    await ActivityService.log({
+                        groupId: group.id,
+                        type: "CYCLE_STARTED",
+                        message: "The first round has officially started!"
+                    });
                 }
-
-                await ActivityService.log({
-                    groupId: group.id,
-                    type: "CYCLE_STARTED",
-                    message: "The first round has officially started!"
-                });
             }
 
             // 3. Sync Rounds if active
